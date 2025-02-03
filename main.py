@@ -16,6 +16,8 @@ site.login()
 queue = deque()
 already_processed = deque(maxlen=1000) 
 
+groups = ['*', 'autopatrolled', 'user', 'confirmed', 'autoconfirmed', 'extendedconfirmed', 'autoextendedconfirmed', 'autoreviewer', 'rollbacker', 'eliminator', 'sysop', 'bureaucrat']
+
 with open('filters.json', 'r') as f:
     regexes = json.load(f)
 
@@ -72,7 +74,15 @@ def perform_actions(page: pywikibot.Page):
         exempt = regexes.get(regex)['exempt_group']
         
         user = pywikibot.User(site, page.latest_revision.user)
-        print(user.groups())
+        _groups = user.groups()
+        
+        highest = '*'
+        for group in _groups:
+            if groups.index(highest) < groups.index(group):
+                highest = group
+                
+        if groups.index(highest) >= groups.index(exempt):
+            continue
         
         _flags = 0
         for flag in flags:
@@ -89,18 +99,19 @@ def perform_actions(page: pywikibot.Page):
         if match_all:
             # All patterns must match
             if sum(matches) == len(matches):
-                print(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}) (match_all)')
-                logger.debug(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}) (one match)')
+                print(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (match_all)')
+                logger.debug(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
         else:
             # Only one pattern needs to match
             if sum(matches) > 0:
-                print(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}) (one match)')
-                logger.debug(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}) (one match)')
+                print(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
+                logger.debug(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
 
-    lang = language(text)
-    if lang != 'pt':
-        print(f'Possible text in other language: {lang} ({page.title(with_ns=True)}, {page.latest_revision_id})')
-        logger.debug(f'Possible text in other language: {lang} ({page.title(with_ns=True)}, {page.latest_revision_id})')
+    if groups.index(highest) < groups.index('autoreviewer'):
+        lang = language(text)
+        if lang != 'pt':
+            print(f'Possible text in other language: {lang} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user})')
+            logger.debug(f'Possible text in other language: {lang} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user})')
 
 while True:
     get_recent_changes(site)

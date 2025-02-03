@@ -23,6 +23,6 @@
             "juvanir",
             "pastor"
         ],
-        "exempt_group": "autopatrolled"
+        "exempt_group": "autoreviewer"
     }
 }
