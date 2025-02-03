@@ -1,1 +1,6 @@
-{"use_language": true}
+{
+    "language": {
+        "exempt": "autoreviewer",
+        "use": true
+    }
+}

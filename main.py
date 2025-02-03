@@ -26,16 +26,19 @@ with open('others.json', 'r') as f:
 
 def get_recent_changes(site, limit=30):
     logger.info("Monitoring recent changes...")
-
-    req = Request(site=site, parameters={
-        'action': 'query',
-        'list': 'recentchanges',
-        'rcprop': 'title|ids',
-        'rcnamespace': '0|1|2|3|4|5',
-        'rclimit': limit,
-    })
-    data = req.submit()
-    changes = data.get('query', {}).get('recentchanges', [])
+    try:
+        req = Request(site=site, parameters={
+            'action': 'query',
+            'list': 'recentchanges',
+            'rcprop': 'title|ids',
+            'rcnamespace': '0|1|2|3|4|5',
+            'rclimit': limit,
+        })
+        data = req.submit()
+        changes = data.get('query', {}).get('recentchanges', [])
+    
+    except Exception as e:
+        logger.warn("Error at recent changes request!", e.args, e.with_traceback())
 
     for change in changes:
         title = change.get('title')
@@ -110,8 +113,8 @@ def perform_actions(page: pywikibot.Page):
                 print(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
                 logger.debug(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
 
-    if others.get('use_language') == True:
-        if groups.index(highest) < groups.index('autoreviewer'):
+    if others.get('language').get('use') == True:
+        if groups.index(highest) < groups.index(others.get('language').get('exempt')):
             lang = language(text)
             if lang != 'pt':
                 print(f'Possible text in other language: {lang} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user})')
