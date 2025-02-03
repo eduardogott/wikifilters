@@ -1,7 +1,7 @@
 {
     "language": {
         "exempt": "autoreviewer",
-        "use": true,
+        "use": false,
         "min_bytes": 500,
         "_comment": "É preferível que o valor em bytes fique bem grande, caso contrário haverão muitos falsos-positivos em redirecionamentos e infocaixas."
     }
