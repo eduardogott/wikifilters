@@ -16,7 +16,7 @@ site.login()
 queue = deque()
 already_processed = deque(maxlen=1000) 
 
-groups = ['*', 'autopatrolled', 'user', 'confirmed', 'autoconfirmed', 'extendedconfirmed', 'autoextendedconfirmed', 'autoreviewer', 'rollbacker', 'eliminator', 'sysop', 'bureaucrat']
+groups = ['*', 'autopatrolled', 'ipblock-exempt', 'user', 'confirmed', 'autoconfirmed', 'extendedconfirmed', 'autoextendedconfirmed', 'autoreviewer', 'rollbacker', 'eliminator', 'sysop', 'bureaucrat']
 
 with open('filters.json', 'r') as f:
     regexes = json.load(f)
@@ -31,7 +31,6 @@ def get_recent_changes(site, limit=30):
             'action': 'query',
             'list': 'recentchanges',
             'rcprop': 'title|ids',
-            'rcnamespace': '0|1|2|3|4|5',
             'rclimit': limit,
         })
         logger.trace("Submitting request")
@@ -42,7 +41,7 @@ def get_recent_changes(site, limit=30):
         changes = data.get('query', {}).get('recentchanges', [])
     
     except Exception as e:
-        logger.warn("Error at recent changes request!", e.args, e.with_traceback())
+        logger.warn("Error at recent changes request!", e.args)
 
     for change in changes:
         title = change.get('title')
@@ -87,14 +86,20 @@ def perform_actions(page: pywikibot.Page):
         match_all = regexes.get(regex)['match_all']
         flags = regexes.get(regex)['flags']
         exempt = regexes.get(regex)['exempt_group']
+        namespace = regexes.get(regex).get('namespace')
+        
+        if namespace and page.namespace() not in namespace:
+            logger.trace(f"Page {page.title(with_ns=True)} not in {regex} namespaces")
+            continue
         
         user = pywikibot.User(site, page.latest_revision.user)
         _groups = user.groups()
         
         highest = '*'
         for group in _groups:
-            if groups.index(highest) < groups.index(group):
-                highest = group
+            if group in groups:
+                if groups.index(highest) < groups.index(group):
+                    highest = group
                 
         if groups.index(highest) >= groups.index(exempt):
             logger.trace(f"User {user.username} exempt from filter {regex}")
@@ -103,38 +108,37 @@ def perform_actions(page: pywikibot.Page):
         _flags = 0
         for flag in flags:
             if flag == 'i':
-                _flags |= re.IGNORECASE  # Use bitwise OR to set re.IGNORECASE for 'i'
+                _flags |= re.IGNORECASE
         
         matches = []
         for pattern in patterns:
             if re.search(pattern, text, _flags): 
                 matches.append(1)
             else:
-                matches.append(0)  # Ensure we track non-matches as well
+                matches.append(0)
                 
         if match_all:
-            # All patterns must match
             if sum(matches) == len(matches):
                 print(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (match_all)')
                 logger.debug(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
         else:
-            # Only one pattern needs to match
             if sum(matches) > 0:
                 print(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
                 logger.debug(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
 
     if others.get('language').get('use') == True:
         if groups.index(highest) < groups.index(others.get('language').get('exempt')):
-            lang = language(text)
-            if lang != 'pt':
-                print(f'Possible text in other language: {lang} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user})')
-                logger.debug(f'Possible text in other language: {lang} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user})')
+            if others.get('language').get('min_bytes') <= len(text):
+                lang = language(text)
+                if lang != 'pt':
+                    print(f'Possible text in other language: {lang} (User:{page.latest_revision.user}, {page.title(with_ns=True)} {page.latest_revision_id})')
 
 while True:
     get_recent_changes(site)
 
+    logger.trace("Queue is: " + ", ".join(page.title(with_ns=True) for page in queue))
+    
     while queue:
-        print(queue)
         page = queue.popleft() 
         perform_actions(page)
 
