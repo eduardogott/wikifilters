@@ -21,6 +21,9 @@ groups = ['*', 'autopatrolled', 'user', 'confirmed', 'autoconfirmed', 'extendedc
 with open('filters.json', 'r') as f:
     regexes = json.load(f)
 
+with open('others.json', 'r') as f:
+    others = json.load(f)
+
 def get_recent_changes(site, limit=30):
     logger.info("Monitoring recent changes...")
 
@@ -107,11 +110,12 @@ def perform_actions(page: pywikibot.Page):
                 print(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
                 logger.debug(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
 
-    if groups.index(highest) < groups.index('autoreviewer'):
-        lang = language(text)
-        if lang != 'pt':
-            print(f'Possible text in other language: {lang} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user})')
-            logger.debug(f'Possible text in other language: {lang} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user})')
+    if others.get('use_language') == True:
+        if groups.index(highest) < groups.index('autoreviewer'):
+            lang = language(text)
+            if lang != 'pt':
+                print(f'Possible text in other language: {lang} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user})')
+                logger.debug(f'Possible text in other language: {lang} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user})')
 
 while True:
     get_recent_changes(site)
