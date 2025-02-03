@@ -1,6 +1,6 @@
 {
     "email": {
-        "flags": "gi",
+        "flags": "i",
         "match_all": true,
         "patterns": [
             "[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+"
@@ -8,7 +8,7 @@
         "exempt_group": "confirmed"
     },
     "ip": {
-        "flags": "gi",
+        "flags": "i",
         "match_all": false,
         "patterns": [
             "((25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)",
@@ -17,7 +17,7 @@
         "exempt_group": "extendedconfirmed"
     },
     "juvanir": {
-        "flags": "gi",
+        "flags": "i",
         "match_all": true,
         "patterns": [
             "juvanir",

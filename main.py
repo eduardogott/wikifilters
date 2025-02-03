@@ -69,6 +69,10 @@ def perform_actions(page: pywikibot.Page):
         patterns = regexes.get(regex)['patterns']
         match_all = regexes.get(regex)['match_all']
         flags = regexes.get(regex)['flags']
+        exempt = regexes.get(regex)['exempt_group']
+        
+        user = pywikibot.User(site, page.latest_revision.user)
+        print(user.groups())
         
         _flags = 0
         for flag in flags:
