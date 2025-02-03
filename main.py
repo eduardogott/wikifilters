@@ -8,9 +8,10 @@ import re
 import difflib
 from language import language
 
+self_username = "Eduardo Gottert"
 logger = Log('main')
 
-site = pywikibot.Site('pt', 'wikipedia', user="Gottert")
+site = pywikibot.Site('pt', 'wikipedia', user=self_username)
 site.login()
 
 queue = deque()
@@ -55,7 +56,7 @@ def get_recent_changes(site, limit=30):
         page = pywikibot.Page(site, title)
         if page.exists():
             logger.trace(f"Page {page.title(with_ns=True)} exists")
-            if page.latest_revision.user != "Gottert":
+            if page.latest_revision.user != self_username:
                 logger.trace(f"Last rev for {page.title(with_ns=True)} wasn't self, queued")
                 queue.append(page)
 

@@ -7,6 +7,9 @@
 * Inserção de links de spotify
 * Texto em outras línguas
 
+> [!IMPORTANT]
+> Para utilizar o bot (configurá-lo), apenas altere **self_username** na 11° linha de (main.py)[./main.py]. Na primeira execução, será necessário logar com o bot. É totalmente possível usar uma conta **sock**, caso se preocupe com a segurança da senha de sua conta.
+
 
 ## Como adicionar mais filtros?
 Adicione-os em (filters.json)[./filters.json], no seguinte formato:
