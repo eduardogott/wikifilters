@@ -34,7 +34,11 @@ def get_recent_changes(site, limit=30):
             'rcnamespace': '0|1|2|3|4|5',
             'rclimit': limit,
         })
+        logger.trace("Submitting request")
+        
         data = req.submit()
+        logger.trace("Request returned")
+        
         changes = data.get('query', {}).get('recentchanges', [])
     
     except Exception as e:
@@ -43,13 +47,18 @@ def get_recent_changes(site, limit=30):
     for change in changes:
         title = change.get('title')
         revid = change.get('revid')
+        logger.trace(f"Processing {revid}")
 
         if revid in already_processed:
+            logger.trace(f"Rev {revid} already processed")
             continue
 
         page = pywikibot.Page(site, title)
-        if page.latest_revision.user != "Gottert":
-            queue.append(page)
+        if page.exists():
+            logger.trace(f"Page {page.title(with_ns=True)} exists")
+            if page.latest_revision.user != "Gottert":
+                logger.trace(f"Last rev for {page.title(with_ns=True)} wasn't self, queued")
+                queue.append(page)
 
         already_processed.append(revid)
         
@@ -57,6 +66,7 @@ def get_recent_changes(site, limit=30):
 def perform_actions(page: pywikibot.Page):
     global text
     if page.revision_count() == 1:
+        logger.trace(f"Page {page.title(with_ns=True)} is new")
         text = page.text
         
     else:
@@ -70,7 +80,7 @@ def perform_actions(page: pywikibot.Page):
 
         text = " ".join([line[2:] for line in diff if line.startswith('+')])
 
-        logger.debug("Added text:" + text)
+        logger.debug(f"(User:{page.latest_revision.user}, {page.title(with_ns=True)}), added text: " + text)
         
     for regex in regexes:
         patterns = regexes.get(regex)['patterns']
@@ -87,6 +97,7 @@ def perform_actions(page: pywikibot.Page):
                 highest = group
                 
         if groups.index(highest) >= groups.index(exempt):
+            logger.trace(f"User {user.username} exempt from filter {regex}")
             continue
         
         _flags = 0
@@ -123,6 +134,7 @@ while True:
     get_recent_changes(site)
 
     while queue:
+        print(queue)
         page = queue.popleft() 
         perform_actions(page)
 
