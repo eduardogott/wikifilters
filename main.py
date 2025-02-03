@@ -47,10 +47,9 @@ def get_recent_changes(site, limit=30):
         if revid in already_processed:
             continue
 
-        if title == "Usuário:Eduardo Gottert/Testes/Bot":
-            page = pywikibot.Page(site, title)
-            if page.latest_revision.user != "Gottert":
-                queue.append(page)
+        page = pywikibot.Page(site, title)
+        if page.latest_revision.user != "Gottert":
+            queue.append(page)
 
         already_processed.append(revid)
         
