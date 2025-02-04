@@ -7,6 +7,7 @@ import json
 import re
 import difflib
 from language import language
+from datetime import datetime
 
 self_username = "Gottert"
 logger = Log('main')
@@ -24,6 +25,26 @@ with open('filters.json', 'r') as f:
 
 with open('others.json', 'r') as f:
     others = json.load(f)
+
+def add_result(dif, filter, user, summary, title):
+    timestamp = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    
+    result_dict =  {"dif": dif,
+                    "filter": filter,
+                    "timestamp": timestamp,
+                    "user": user,
+                    "edit_summary": summary,
+                    "page_title": title}
+    try:
+        with open('results.json', 'r') as f:
+            result_json = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):  # Handle missing/corrupted file
+        result_json = {"already_listed": {}, "last_update": "never", "results": [], "stats": {"filter_activations": {}, "activations_by_user": {}}, "update_interval": 120}
+    
+    result_json['results'].append(result_dict)
+    
+    with open('results.json', 'w') as f:
+        json.dump(result_json)
 
 def get_recent_changes(site, limit=30):
     logger.info("Monitoring recent changes...")
@@ -62,7 +83,6 @@ def get_recent_changes(site, limit=30):
 
         already_processed.append(revid)
         
-
 def perform_actions(page: pywikibot.Page):
     try:
         global text
@@ -131,13 +151,11 @@ def perform_actions(page: pywikibot.Page):
                 if sum(matches) == len(matches):
                     print(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (match_all)')
                     logger.debug(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
+                    add_result(page.latest_revision_id, regex, page.latest_revision.user, page.latest_revision.comment, page.title(with_ns=True))
             else:
                 if sum(matches) > 0:
                     print(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
                     logger.debug(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
-
-        #for regex in negative_regex:
-            
             
         if others.get('language').get('use') == True:
             if groups.index(highest) < groups.index(others.get('language').get('exempt')):
@@ -153,7 +171,8 @@ def perform_actions(page: pywikibot.Page):
     except Exception:
         logger.trace("Undisclosed exception while analysing page")
         return
-    
+
+
 logger.info("Starting...")
 while True:
     get_recent_changes(site)
