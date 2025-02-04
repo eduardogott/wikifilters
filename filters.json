@@ -33,5 +33,13 @@
         "patterns": [
             "((?:https?:\/\/)?(?:open.)?spotify.com\/.*?(track|user|artist|album)\/[a-zA-Z0-9]+(\/playlist\/[a-zA-Z0-9]+|)|spotify:(track|user|artist|album):[a-zA-Z0-9]+(:playlist:[a-zA-Z0-9]+|))"
         ]
+    },
+    "infocaixa": {
+        "exempt_group": "autoreviewer",
+        "flags": "i",
+        "match_all": false,
+        "patterns": ["\\{\\{\\s*Info\\/[^}]*?\\}\\}"],
+        "namespace": [0, 1, 2, 3, 4, 5],
+        "negative": true
     }
 }

@@ -17,7 +17,7 @@ site.login()
 queue = deque()
 already_processed = deque(maxlen=1000) 
 
-groups = ['*', 'autopatrolled', 'ipblock-exempt', 'user', 'confirmed', 'autoconfirmed', 'extendedconfirmed', 'autoextendedconfirmed', 'autoreviewer', 'rollbacker', 'eliminator', 'sysop', 'bureaucrat']
+groups = ['*', 'autopatrolled', 'ipblock-exempt', 'user', 'confirmed', 'autoconfirmed', 'extendedconfirmed', 'autoextendedconfirmed', 'autoreviewer', 'rollbacker', 'eliminator', 'bot', 'sysop', 'bureaucrat']
 
 with open('filters.json', 'r') as f:
     regexes = json.load(f)
@@ -80,8 +80,9 @@ def perform_actions(page: pywikibot.Page):
             diff = difflib.ndiff(old_rev.splitlines(), new_rev.splitlines())
 
             text = " ".join([line[2:] for line in diff if line.startswith('+')])
+            neg_text = " ".join([line[2:] for line in diff if line.startswth('-')])
 
-            logger.debug(f"(User:{page.latest_revision.user}, {page.title(with_ns=True)}), added text: " + text)
+            logger.debug(f"(User:{page.latest_revision.user}, {page.title(with_ns=True)}), added text: " + text + "- Removed text:" + neg_text)
             
         for regex in regexes:
             patterns = regexes.get(regex)['patterns']
@@ -89,6 +90,7 @@ def perform_actions(page: pywikibot.Page):
             flags = regexes.get(regex)['flags']
             exempt = regexes.get(regex)['exempt_group']
             namespace = regexes.get(regex).get('namespace')
+            negative = regexes.get(regex).get('negative')
             
             if namespace and page.namespace() not in namespace:
                 logger.trace(f"Page {page.title(with_ns=True)} not in {regex} namespaces")
@@ -114,10 +116,16 @@ def perform_actions(page: pywikibot.Page):
             
             matches = []
             for pattern in patterns:
-                if re.search(pattern, text, _flags): 
-                    matches.append(1)
+                if negative:
+                    if re.search(pattern, neg_text, _flags): 
+                        matches.append(1)
+                    else:
+                        matches.append(0)
                 else:
-                    matches.append(0)
+                    if re.search(pattern, text, _flags): 
+                        matches.append(1)
+                    else:
+                        matches.append(0)
                     
             if match_all:
                 if sum(matches) == len(matches):
@@ -128,6 +136,9 @@ def perform_actions(page: pywikibot.Page):
                     print(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
                     logger.debug(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
 
+        #for regex in negative_regex:
+            
+            
         if others.get('language').get('use') == True:
             if groups.index(highest) < groups.index(others.get('language').get('exempt')):
                 if others.get('language').get('min_bytes') <= len(text):
