@@ -163,6 +163,5 @@ while True:
     while queue:
         page = queue.popleft() 
         perform_actions(page)
-        sleep(3)
 
     sleep(5)

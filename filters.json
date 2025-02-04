@@ -41,5 +41,18 @@
         "patterns": ["\\{\\{\\s*Info\\/[^}]*?\\}\\}"],
         "namespace": [0, 1, 2, 3, 4, 5],
         "negative": true
+    },
+    "chatgpt_links": {
+        "exempt_group": "sysop",
+        "flags": "i",
+        "match_all": false,
+        "patterns": ["chatgpt\\.com"]
+    },
+    "emails": {
+        "exempt_group": "autoreviewer",
+        "flags": "i",
+        "match_all": false,
+        "patterns": ["[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"],
+        "namespace": [0]
     }
 }
