@@ -27,6 +27,7 @@ with open('others.json', 'r') as f:
     others = json.load(f)
 
 def add_result(dif, filter, user, summary, title):
+    logger.trace(f"Adding {dif} to results.json")
     timestamp = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     
     result_dict =  {"dif": dif,
@@ -35,17 +36,30 @@ def add_result(dif, filter, user, summary, title):
                     "user": user,
                     "edit_summary": summary,
                     "page_title": title}
+    
+    logger.trace(f"Dict {result_dict} for {dif}")
+    
     try:
         with open('results.json', 'r') as f:
             result_json = json.load(f)
+            logger.trace(f"Loaded results.json")
+            
     except (FileNotFoundError, json.JSONDecodeError):  # Handle missing/corrupted file
         result_json = {"already_listed": {}, "last_update": "never", "results": [], "stats": {"filter_activations": {}, "activations_by_user": {}}, "update_interval": 120}
     
     result_json['results'].append(result_dict)
+    logger.trace(f"Appendend the the dict to the json")
     
     with open('results.json', 'w') as f:
-        json.dump(result_json)
+        json.dump(result_json, f, indent=4)
+        logger.trace(f"Dumped results.json")
 
+def add_filter_actiovation(filter):
+    ...
+    
+def add_user_activation(user):
+    ...
+        
 def get_recent_changes(site, limit=30):
     logger.info("Monitoring recent changes...")
     try:
@@ -98,11 +112,10 @@ def perform_actions(page: pywikibot.Page):
             new_rev = page.text
             
             diff = difflib.ndiff(old_rev.splitlines(), new_rev.splitlines())
-
+            
             text = " ".join([line[2:] for line in diff if line.startswith('+')])
-            neg_text = " ".join([line[2:] for line in diff if line.startswth('-')])
 
-            logger.debug(f"(User:{page.latest_revision.user}, {page.title(with_ns=True)}), added text: " + text + "- Removed text:" + neg_text)
+            logger.debug(f"(User:{page.latest_revision.user}, {page.title(with_ns=True)}), added text: " + text)
             
         for regex in regexes:
             patterns = regexes.get(regex)['patterns']
@@ -111,6 +124,9 @@ def perform_actions(page: pywikibot.Page):
             exempt = regexes.get(regex)['exempt_group']
             namespace = regexes.get(regex).get('namespace')
             negative = regexes.get(regex).get('negative')
+            
+            if negative:
+                continue
             
             if namespace and page.namespace() not in namespace:
                 logger.trace(f"Page {page.title(with_ns=True)} not in {regex} namespaces")
@@ -136,16 +152,16 @@ def perform_actions(page: pywikibot.Page):
             
             matches = []
             for pattern in patterns:
-                if negative:
+                """if negative:
                     if re.search(pattern, neg_text, _flags): 
                         matches.append(1)
                     else:
                         matches.append(0)
+                else:"""
+                if re.search(pattern, text, _flags): 
+                    matches.append(1)
                 else:
-                    if re.search(pattern, text, _flags): 
-                        matches.append(1)
-                    else:
-                        matches.append(0)
+                    matches.append(0)
                     
             if match_all:
                 if sum(matches) == len(matches):
@@ -156,6 +172,7 @@ def perform_actions(page: pywikibot.Page):
                 if sum(matches) > 0:
                     print(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
                     logger.debug(f'Match in filter {regex} ({page.title(with_ns=True)}, {page.latest_revision_id}, {page.latest_revision.user}) (one match)')
+                    add_result(page.latest_revision_id, regex, page.latest_revision.user, page.latest_revision.comment, page.title(with_ns=True))
             
         if others.get('language').get('use') == True:
             if groups.index(highest) < groups.index(others.get('language').get('exempt')):

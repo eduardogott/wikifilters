@@ -31,4 +31,4 @@ Adicione-os em [filters.json](./filters.json), no seguinte formato:
 * match_all: Se true, todos os patterns tem que pegar, se false, apenas um basta;
 * patterns: Os patterns em regex (crie-os em [regex101.com](regex101.com));
 * namespace (opcional): Quais namespaces o filtro pega, se for omitido pega em todos. Veja uma lista em (WP:Domínio)[https://pt.wikipedia.org/wiki/Wikipédia:Domínio].
-* negative (opcional): Se for true, irá testar o regex no texto removido da página.
+* negative (opcional): Se for true, irá testar o regex no texto removido da página. (Desativado para testes devido a erros)

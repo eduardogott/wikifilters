@@ -1,12 +1,4 @@
 {
-    "email": {
-        "exempt_group": "confirmed",
-        "flags": "i",
-        "match_all": true,
-        "patterns": [
-            "[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+"
-        ]
-    },
     "ip": {
         "exempt_group": "autoreviewer",
         "flags": "i",
@@ -35,7 +27,7 @@
         ]
     },
     "infocaixa": {
-        "exempt_group": "autoreviewer",
+        "exempt_group": "sysop",
         "flags": "i",
         "match_all": false,
         "patterns": ["\\{\\{\\s*Info\\/[^}]*?\\}\\}"],
@@ -48,7 +40,7 @@
         "match_all": false,
         "patterns": ["chatgpt\\.com"]
     },
-    "emails": {
+    "email": {
         "exempt_group": "autoreviewer",
         "flags": "i",
         "match_all": false,
